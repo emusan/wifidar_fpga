@@ -12,6 +12,8 @@ entity wifidar_fpga is
 --		rot_a: in std_logic;
 --		rot_b: in std_logic;
 --		button_in: in std_logic_vector(3 downto 0);
+		switches: in std_logic_vector(3 downto 0);
+		change_amp: in std_logic;
 		
 		SPI_SS_B: out std_logic;
 		AMP_CS: out std_logic;
@@ -166,6 +168,7 @@ architecture structural of wifidar_fpga is
 			preamp_done: out std_logic;
 			send_data: in std_logic;
 			busy: out std_logic;
+			gain_in: in std_logic_vector(3 downto 0);
 			
 			spi_mosi: out std_logic;
 			spi_sck: out std_logic;
@@ -214,13 +217,15 @@ architecture structural of wifidar_fpga is
 	
 	signal amp_send: std_logic;
 	signal amp_busy: std_logic;
+	
+	signal req_amp_controller: std_logic;
 begin
 
 	uarter: uart port map (uart_tx,uart_data,uart_ready,uart_send_data,rst,clk);
 
 	sample_buefferer: sample_buffer generic map (num_samples,sample_length_bits) port map (adc_sample_data,sample_buffer_out,load_adc,initial_sample,sample_out_index,sample_buffer_full,rst,clk);
 
-	adc_controllerer: adc_controller port map (open,req_adc,req_amp,rst,clk);
+	adc_controllerer: adc_controller port map (open,req_adc,req_amp_controller,rst,clk);
 
 	uart_minibuffer: uart_minibuf generic map (num_samples,sample_length_bits) port map (sample_buffer_out,uart_data,sample_out_index,sample_buffer_full,uart_send_data,uart_ready,rst,clk);
 
@@ -232,10 +237,12 @@ begin
 
 	adc_spi_control: adc_receiver port map (adc_send,adc_busy,spi_sck_sig2,SPI_MISO,AD_CONV,adc_sample_data,open,load_adc,clk);
 	
-	amp_controller: preamp_config port map (open,amp_send,amp_busy,spi_mosi_sig2,spi_sck_sig3,clk);
+	amp_controller: preamp_config port map (open,amp_send,amp_busy,switches,spi_mosi_sig2,spi_sck_sig3,clk);
 	
 	SPI_MOSI <= spi_mosi_sig2;
 	SPI_SCK <= spi_sck_sig2 or spi_sck_sig3;
+	
+	req_amp <= req_amp_controller or change_amp;
 	
 	spi_controller_busy <= adc_busy or amp_busy;
 	

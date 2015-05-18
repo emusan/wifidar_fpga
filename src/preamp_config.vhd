@@ -10,6 +10,7 @@ entity preamp_config is
 		preamp_done: out std_logic;
 		send_data: in std_logic;
 		busy: out std_logic;
+		gain_in: in std_logic_vector(3 downto 0);
 		
 		spi_mosi: out std_logic;
 		spi_sck: out std_logic;
@@ -84,13 +85,13 @@ begin
 								when 4 =>
 									spi_mosi <= '0';
 								when 5 =>
-									spi_mosi <= '0';
+									spi_mosi <= gain_in(3);
 								when 6 =>
-									spi_mosi <= '0';
+									spi_mosi <= gain_in(2);
 								when 7 => 
-									spi_mosi <= '1';
+									spi_mosi <= gain_in(1);
 								when 8 =>
-									spi_mosi <= '0';
+									spi_mosi <= gain_in(0);
 								when others =>
 									spi_mosi <= '0';
 									--amp_cs <= '1';
